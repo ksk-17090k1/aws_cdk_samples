@@ -2,8 +2,11 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { aws_apigateway, aws_lambda_nodejs, aws_lambda } from "aws-cdk-lib";
 
+// interface Props extends cdk.StackProps {}  でも良い
+type Props = cdk.StackProps & {};
+
 export class MyLambdaStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: Props) {
     super(scope, id, props);
 
     // NOTE: JavaScriptの場合、拡張子をmjsにしないと動かない
