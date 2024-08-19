@@ -1,11 +1,10 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { aws_apigateway, aws_lambda_nodejs, aws_lambda } from "aws-cdk-lib";
 
 // interface Props extends cdk.StackProps {}  でも良い
 type Props = cdk.StackProps & {};
 
-export class MyLambdaStack extends cdk.Stack {
+export class MyTemplateStack extends cdk.Stack {
   readonly outputSample: cdk.CfnOutput;
   constructor(scope: Construct, id: string, props?: Props) {
     super(scope, id, props);
