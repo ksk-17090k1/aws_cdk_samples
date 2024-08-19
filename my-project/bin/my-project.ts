@@ -27,7 +27,9 @@ const app = new cdk.App();
 //   },
 // });
 
-new MySbcntrStack(app, "MySbcntrStack", {
+const stackVersion = app.node.tryGetContext("stackVersion");
+
+new MySbcntrStack(app, `MySbcntrStack${stackVersion}`, {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: "ap-northeast-1",

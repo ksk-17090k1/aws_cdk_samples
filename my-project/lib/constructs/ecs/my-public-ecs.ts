@@ -5,37 +5,31 @@ import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as iam from "aws-cdk-lib/aws-iam";
+import { Platform } from "aws-cdk-lib/aws-ecr-assets";
 
-type Props = {
-  vpc: ec2.IVpc;
-  sgContainer: ec2.ISecurityGroup;
-};
+type Props = {};
 
-export class MyBasicEcs extends Construct {
+export class MyPublicEcs extends Construct {
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
 
-    // const vpc = props.vpc;
-
-    const vpc = new ec2.Vpc(this, "MyVpc", {
-      vpcName: "MyEcsVpc",
-      // 192.168.0.0/16, 172.16.0.0/16 でもOK
-      ipAddresses: ec2.IpAddresses.cidr("10.0.0.0/16"),
-      // it defaults to 3
+    const stackVersion = this.node.tryGetContext("stackVersion");
+    const vpc = new ec2.Vpc(this, `MyVpc${stackVersion}`, {
+      vpcName: "MyEcsVpc${stackVersion}",
+      ipAddresses: ec2.IpAddresses.cidr("10.8.0.0/16"),
       maxAzs: 2,
       natGateways: 0,
       subnetConfiguration: [
         {
           cidrMask: 24,
-          name: "ingress",
-          // internet gatewayがアタッチされたサブネット
+          name: "public",
           subnetType: ec2.SubnetType.PUBLIC,
         },
       ],
     });
 
-    const cluster = new ecs.Cluster(this, "Cluster", {
-      clusterName: `my-basic-cluster`,
+    const cluster = new ecs.Cluster(this, `Cluster${stackVersion}`, {
+      clusterName: `my-public-cluster${stackVersion}`,
       vpc,
       enableFargateCapacityProviders: true,
     });
@@ -57,6 +51,31 @@ export class MyBasicEcs extends Construct {
     //   taskDefinition: ec2TaskDefinition,
     // });
 
+    // コンテナを立ち上げるときにECSが使うロール
+    // 同じ内容の AmazonECSTaskExecutionRolePolicy というロールが勝手に作成されることがあるらしいが、
+    // CDKで明示的に指定したい場合や、何かしらの理由で無い場合は下記のように作成が必要。
+    const executionRole = new iam.Role(this, "MyEcsExeRole", {
+      assumedBy: new iam.ServicePrincipal("ec2.amazonaws.com"),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName(
+          "service-role/AmazonECSTaskExecutionRolePolicy"
+        ),
+      ],
+      description: "my-ecs-execution-role",
+    });
+    // SSM Messages のフルアクセスを追加
+    executionRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel",
+        ],
+        resources: ["*"],
+      })
+    );
+
     // Fargate Service
     const fargateTaskDefinition = new ecs.FargateTaskDefinition(
       this,
@@ -64,13 +83,10 @@ export class MyBasicEcs extends Construct {
       {
         cpu: 256,
         memoryLimitMiB: 512,
-        // AmazonECSTaskExecutionRolePolicy がアタッチされたIAMロールを指定する
-        // 勝手に作成されることがあるらしいが、無い場合は別途作成が必要。
-        executionRole: iam.Role.fromRoleArn(
-          this,
-          "ExecutionRole",
-          `arn:aws:iam::${cdk.Aws.ACCOUNT_ID}:role/ecsTaskExecutionRole`
-        ),
+        executionRole: executionRole,
+        // コンテナに付与されるロール
+        // executionRole と同一である必要はまったくないが、ダミーとして設定
+        taskRole: executionRole,
       }
     );
 
@@ -79,17 +95,17 @@ export class MyBasicEcs extends Construct {
       logRetention: logs.RetentionDays.ONE_WEEK,
     });
 
+    // ローカルのDockerfileを使ってイメージをビルドする場合
+    // TODO: なんかちゃんとイメージタグとかを管理するやりかたがあるらしい
+    // NOTE: ヘルスチェックは以下のところでも入れられるが、ALBで入れてるので指定しない
     fargateTaskDefinition.addContainer("web", {
-      // NOTE: ヘルスチェックはここでも入れられるが、ALBで入れてるので指定しない
-      //   image: ecs.ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
-      // ECRの命名規則に従ったイメージ名
-      //   image: ecs.ContainerImage.fromRegistry(
-      //     `${cdk.Aws.ACCOUNT_ID}.dkr.ecr.${cdk.Aws.REGION}.amazonaws.com/sbcntr-frontend:v1`
-      //   ),
       // 以下のようにすると、指定したディレクトリ配下のDockerfileを使える
       // NOTE: 内部の挙動としてはECRにpushされるので、結果private subnetならNATかVPCエンドポイントが必要
-      image: ecs.ContainerImage.fromAsset("./lib/constructs/ecs/"),
-      //   memoryLimitMiB: 512,
+      image: ecs.ContainerImage.fromAsset("./lib/constructs/ecs/", {
+        // M1 MacでAMDのFarget用のイメージをビルドしたいときは以下を指定
+        // NOTE: Dockerfileの方のFROMのところでAMDを指定するやり方のがいいかも。
+        platform: Platform.LINUX_AMD64,
+      }),
       // 通信がawsvpcかhost network modeを使用している場合は、hostportはコンテナポートと同じ値か、指定を省略できる。
       //   portMappings: [{ containerPort: 3000, hostPort: 3000 }],
       // docker container run するときの -i オプション
@@ -106,25 +122,34 @@ export class MyBasicEcs extends Construct {
       memoryReservationMiB: 512,
     });
 
-    // subnet idの取得
-    // const { subnetIds: albSubnetIds } = vpc.selectSubnets({
-    //   subnetGroupName: "sbcntr-subnet-private-container",
-    // });
+    // ECRからイメージを取得する場合
+    fargateTaskDefinition.addContainer("web-from-resistory", {
+      // NOTE: ECRのpublic repositoryはVPCエンドポイントでは接続できないらしいので注意！
+      image: ecs.ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
+      // ECRの命名規則に従ったイメージ名
+      //   image: ecs.ContainerImage.fromRegistry(
+      //     `${cdk.Aws.ACCOUNT_ID}.dkr.ecr.${cdk.Aws.REGION}.amazonaws.com/sbcntr-frontend:v1`
+      //   ),
+      logging: logDriver,
+    });
 
+    const sgService = new ec2.SecurityGroup(this, "service-sg", {
+      vpc,
+      allowAllOutbound: true,
+      description: "Security Group of ECS Service",
+    });
+    sgService.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(443),
+      "Allow HTTPS from anywhere"
+    );
     const service = new ecs.FargateService(this, "Service", {
       serviceName: "my-basic-service",
       cluster,
       taskDefinition: fargateTaskDefinition,
-      // TODO: subnetを指定する方法をまとめたい。
+      // TODO: subnetを指定する方法をまとめたい。3種類あるはず。種類、ID、IDで検索
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-      // とかでもできる。あとたぶんsubnetIdでもできる。
-      //   vpcSubnets: {
-      //     subnets: [
-      //       ec2.Subnet.fromSubnetId(this, "ECSSubnet1", albSubnetIds[0]),
-      //       ec2.Subnet.fromSubnetId(this, "ECSSubnet2", albSubnetIds[1]),
-      //     ],
-      //   },
-      //   securityGroups: [props.sgContainer],
+      securityGroups: [sgService],
       capacityProviderStrategies: [
         {
           capacityProvider: "FARGATE_SPOT",
@@ -139,13 +164,14 @@ export class MyBasicEcs extends Construct {
       ],
       // default is 1
       desiredCount: 2,
+      // public subnetにコンテナ立てる場合はtrueにしないとECRへ接続できない！
+      assignPublicIp: true,
       // 以下２つはEC2でローリングデプロイをする場合のパラメータ
       // Fargetやblue/greenデプロイの場合は無視される
       // 厳密にいうと、blue/greenデプロイの場合は最小が100で最大が200になる
       //  ref: https://zenn.dev/kenryo/articles/ecs-min-max-helth-percentage
       minHealthyPercent: 100,
       maxHealthyPercent: 200,
-      //   assignPublicIp: true,
     });
 
     // これでターゲットグループにサービスをアタッチできるぽい
