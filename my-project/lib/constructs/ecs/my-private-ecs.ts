@@ -28,6 +28,7 @@ export class MyPrivateEcs extends Construct {
       this,
       "TaskDef",
       {
+        family: "my-private-task",
         cpu: 256,
         memoryLimitMiB: 512,
       }

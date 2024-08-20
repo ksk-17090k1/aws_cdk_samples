@@ -42,6 +42,9 @@ export class SbcntrALbExternal extends Construct {
       protocol: elbv2.ApplicationProtocol.HTTP,
       port: 80,
       targetType: elbv2.TargetType.IP,
+      // デフォルトはラウンドロビン
+      loadBalancingAlgorithmType:
+        elbv2.TargetGroupLoadBalancingAlgorithmType.ROUND_ROBIN,
       healthCheck: {
         path: "/healthcheck",
         healthyThresholdCount: 2,
@@ -77,7 +80,8 @@ export class SbcntrALbExternal extends Construct {
       port: 80,
       // forward
       defaultAction: elbv2.ListenerAction.forward([targetGroup]),
-      // forwardの場合 defaultTargetGroups の指定でもOK
+      // forwardの場合 defaultTargetGroups の指定でもOK。
+      // これは addTargetGroups() と addAction() の違いに似ている
       //   defaultTargetGroups: [targetGroup],
       // fixed response
       //   defaultAction: elbv2.ListenerAction.fixedResponse(503, {

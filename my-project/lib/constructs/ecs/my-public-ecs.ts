@@ -68,6 +68,7 @@ export class MyPublicEcs extends Construct {
       this,
       "TaskDef",
       {
+        // タスク定義の名前てきなもの
         family: `my-public-taskdef${stackVersion}`,
         cpu: 256,
         memoryLimitMiB: 512,
@@ -75,7 +76,7 @@ export class MyPublicEcs extends Construct {
         // ref: operatingSystemFamily: ecs.OperatingSystemFamily.WINDOWS_SERVER_2019_CORE,
         runtimePlatform: {
           operatingSystemFamily: ecs.OperatingSystemFamily.LINUX,
-          // ARMにするとfargate spotが使えないので注意
+          // ARMにすると fargate spotが使えないので注意
           cpuArchitecture: ecs.CpuArchitecture.X86_64,
         },
         // コンテナを立ち上げるときにECSが使うロール
@@ -185,7 +186,7 @@ export class MyPublicEcs extends Construct {
         type: ecs.DeploymentControllerType.ECS,
       },
       // 以下２つはEC2でローリングデプロイをする場合のパラメータ
-      // Fargetやblue/greenデプロイの場合は無視される
+      // Fargateやblue/greenデプロイの場合は無視される
       // 厳密にいうと、blue/greenデプロイの場合は最小が100で最大が200になる
       //  ref: https://zenn.dev/kenryo/articles/ecs-min-max-helth-percentage
       minHealthyPercent: 100,

@@ -42,6 +42,7 @@ export class MyPrivateNatEcs extends Construct {
       this,
       "TaskDef",
       {
+        family: "my-private-nat-task",
         cpu: 256,
         memoryLimitMiB: 512,
       }
@@ -58,7 +59,6 @@ export class MyPrivateNatEcs extends Construct {
       portMappings: [
         { containerPort: 3000, hostPort: 3000, protocol: ecs.Protocol.TCP },
       ],
-
       logging: logDriver,
     });
 
