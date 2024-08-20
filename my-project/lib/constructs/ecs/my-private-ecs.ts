@@ -24,34 +24,12 @@ export class MyPrivateEcs extends Construct {
       enableFargateCapacityProviders: true,
     });
 
-    const executionRole = new iam.Role(this, "MyEcsExeRole", {
-      assumedBy: new iam.ServicePrincipal("ec2.amazonaws.com"),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName(
-          "service-role/AmazonECSTaskExecutionRolePolicy"
-        ),
-      ],
-      description: "my-ecs-execution-role",
-    });
-    // SSM Messages のフルアクセスを追加
-    executionRole.addToPolicy(
-      new iam.PolicyStatement({
-        actions: [
-          "ssmmessages:CreateControlChannel",
-          "ssmmessages:CreateDataChannel",
-          "ssmmessages:OpenControlChannel",
-          "ssmmessages:OpenDataChannel",
-        ],
-        resources: ["*"],
-      })
-    );
     const fargateTaskDefinition = new ecs.FargateTaskDefinition(
       this,
       "TaskDef",
       {
         cpu: 256,
         memoryLimitMiB: 512,
-        executionRole: executionRole,
       }
     );
 
@@ -64,6 +42,9 @@ export class MyPrivateEcs extends Construct {
       image: ecs.ContainerImage.fromAsset("./lib/constructs/ecs/", {
         platform: Platform.LINUX_AMD64,
       }),
+      portMappings: [
+        { containerPort: 3000, hostPort: 3000, protocol: ecs.Protocol.TCP },
+      ],
       logging: logDriver,
     });
 

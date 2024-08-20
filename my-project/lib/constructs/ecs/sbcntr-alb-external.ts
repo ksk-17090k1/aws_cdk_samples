@@ -2,10 +2,12 @@ import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import * as ecs from "aws-cdk-lib/aws-ecs";
 
 type Props = {
   vpc: ec2.IVpc;
   sgIngress: ec2.ISecurityGroup;
+  fargateService: elbv2.IApplicationLoadBalancerTarget;
 };
 
 export class SbcntrALbExternal extends Construct {
@@ -14,6 +16,7 @@ export class SbcntrALbExternal extends Construct {
 
     const vpc = props.vpc;
     const sgIngress = props.sgIngress;
+    const service = props.fargateService;
 
     // subnet idの取得
     const { subnetIds: albSubnetIds } = vpc.selectSubnets({
@@ -35,8 +38,9 @@ export class SbcntrALbExternal extends Construct {
 
     const targetGroup = new elbv2.ApplicationTargetGroup(this, "TargetGroup", {
       vpc: vpc,
-      port: 80,
+      // 以下で指定したプロトコル、ポートでALBはターゲットへ通信する
       protocol: elbv2.ApplicationProtocol.HTTP,
+      port: 80,
       targetType: elbv2.TargetType.IP,
       healthCheck: {
         path: "/healthcheck",
@@ -46,15 +50,31 @@ export class SbcntrALbExternal extends Construct {
         timeout: cdk.Duration.seconds(5),
         healthyHttpCodes: "200",
       },
+      // これでもいけるぽい
+      // targets: [service],
     });
+    // addTarget() の引数は IApplicationLoadBalancerTarget 型
+    // これは AutoScalingGroup, Ec2Service, FargateService, InstanceIdTarget, InstanceTarget, IpTarget, LambdaTarget 等をimplementsしている
+    targetGroup.addTarget(service);
+    // 最初に指定された必須コンテナ以外をターゲットにしたい場合は loadBalancerTarget を使う
+    // albTargetGroup.addTarget(
+    //   service.loadBalancerTarget({
+    //     containerName: fargateTaskDefinition.defaultContainer!.containerName,
+    //     containerPort: fargateTaskDefinition.defaultContainer!.containerPort,
+    //   })
+    // );
 
-    // addListener() ではデフォルトのリスナールールを設定できる。
+    // これでもserviceとtarget groupの紐づけができるぽい
+    // service.attachToApplicationTargetGroup(targetGroup);
+
+    // addListener() では"デフォルトの"リスナールールを設定できる。
     // と言っても、デフォルトルールの優先度は最低、条件は何もマッチしなかったとき、と既定なので、
     // 実質アクションとターゲットグループを指定する形になる。
     // ref: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_elasticloadbalancingv2.BaseApplicationListenerProps.html
     const listener = alb.addListener("Listener", {
-      port: 80,
+      // listenするプロトコルとポートを指定する。例えばテストリスナーなら10080ポートにしたりする
       protocol: elbv2.ApplicationProtocol.HTTP,
+      port: 80,
       // forward
       defaultAction: elbv2.ListenerAction.forward([targetGroup]),
       // forwardの場合 defaultTargetGroups の指定でもOK
@@ -77,7 +97,8 @@ export class SbcntrALbExternal extends Construct {
       open: true,
     });
 
-    // addTargets() はターゲットグループの作成と、優先度、条件、ターゲットの追加を行う
+    // addTargets() はデフォルトではないターゲットグループの作成と、リスナールール(優先度、条件、アクション)の追加を行う
+    // addTargets() のアクションは暗黙的に forward になっているぽい
     // NOTE: addTargets() -> addTargetGroups() -> addAction() の順で抽象度が下がっていくらしい
     //       なので細く設定したい場合はaddAction()を使う
     listener.addTargets("ApplicationFleet", {
@@ -88,11 +109,32 @@ export class SbcntrALbExternal extends Construct {
         elbv2.ListenerCondition.httpRequestMethods(["GET"]),
       ],
       port: 8080,
+      // service を指定する場合
+      //   targets: [service],
+      // auto scaling group を指定する場合
       //   targets: [asg],
+      // EC2 instance を指定する場合
       //   targets: [
       //     new targets.InstanceTarget(ec2Instance1, 80),
       //     new targets.InstanceTarget(ec2Instance2, 80),
       //   ],
+    });
+
+    // addTargetGroups の実装例
+    // これもactionは暗黙的にforwardになる
+    // target groupは自分で作成する必要がある
+    listener.addTargetGroups(`MyTargetGroup`, {
+      priority: 10,
+      conditions: [elbv2.ListenerCondition.pathPatterns(["/ok", "/path"])],
+      targetGroups: [targetGroup],
+    });
+
+    // addAction() の実装例
+    // actionは自由に決めれる。actionでcognito認証かけたいときはこれを使う必要あるかも
+    listener.addAction("Fixed", {
+      priority: 10,
+      conditions: [elbv2.ListenerCondition.pathPatterns(["/ok"])],
+      action: elbv2.ListenerAction.forward([targetGroup]),
     });
   }
 }

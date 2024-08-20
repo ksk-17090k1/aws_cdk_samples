@@ -15,10 +15,10 @@ export class MySbcntrStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: Props) {
     super(scope, id, props);
 
-    const vpc = new SbcntrVpc(this, "SbcntrVpc", {});
-    const sg = new SbcntrSg(this, "SbcntrSg", {
-      vpc: vpc.vpc,
-    });
+    // const vpc = new SbcntrVpc(this, "SbcntrVpc", {});
+    // const sg = new SbcntrSg(this, "SbcntrSg", {
+    //   vpc: vpc.vpc,
+    // });
 
     // new SbcntrVpcEndPoint(this, "SbcntrVpcEndPoint", {
     //   vpc: vpc.vpc,
