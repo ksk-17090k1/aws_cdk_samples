@@ -27,7 +27,8 @@ export class MyBasicEc2 extends Construct {
       // これでもいけそう
       //   vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       instanceType: ec2.InstanceType.of(
-        ec2.InstanceClass.T2,
+        // x84ならT2がいいかも
+        ec2.InstanceClass.T4G,
         ec2.InstanceSize.NANO
       ),
       machineImage: new ec2.AmazonLinuxImage({

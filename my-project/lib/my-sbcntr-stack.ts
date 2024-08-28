@@ -6,6 +6,7 @@ import { SbcntrALbInternal } from "./constructs/sbcntr/sbcntr-alb-internal";
 import { SbcntrEcsBackend } from "./constructs/sbcntr/sbcntr-ecs-backend";
 import { SbcntrEcsFrontend } from "./constructs/sbcntr/sbcntr-ecs-frontend";
 import { SbcntrALbExternal } from "./constructs/sbcntr/sbcntr-alb-external";
+import { SbcntrBastion } from "./constructs/sbcntr/sbcntr-bastion";
 
 type Props = cdk.StackProps & {};
 
@@ -28,16 +29,21 @@ export class MySbcntrStack extends cdk.Stack {
       fargateService: ecsBackend.fargateService,
     });
 
-    // const ecsFrontend = new SbcntrEcsFrontend(this, "SbcntrEcsFrontend", {
-    //   vpc: vpc.vpc,
-    //   sgService: sg.sgIngress,
-    //   backendHost: albInternal.loadBalancerDnsName,
-    // });
+    const ecsFrontend = new SbcntrEcsFrontend(this, "SbcntrEcsFrontend", {
+      vpc: vpc.vpc,
+      sgService: sg.sgIngress,
+      backendHost: albInternal.loadBalancerDnsName,
+    });
 
-    // new SbcntrALbExternal(this, "SbcntrALbExternal", {
-    //   vpc: vpc.vpc,
-    //   sgIngress: sg.sgIngress,
-    //   fargateService: ecsFrontend.fargateService,
-    // });
+    new SbcntrALbExternal(this, "SbcntrALbExternal", {
+      vpc: vpc.vpc,
+      sgIngress: sg.sgIngress,
+      fargateService: ecsFrontend.fargateService,
+    });
+
+    new SbcntrBastion(this, "SbcntrBastion", {
+      vpc: vpc.vpc,
+      sg: sg.sgManagement,
+    });
   }
 }

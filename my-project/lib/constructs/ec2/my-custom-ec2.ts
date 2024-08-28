@@ -125,8 +125,9 @@ export class MyCustomEc2 extends Construct {
         subnetType: ec2.SubnetType.PUBLIC,
       }),
       instanceType: ec2.InstanceType.of(
-        ec2.InstanceClass.T2,
-        ec2.InstanceSize.MICRO
+        // x84ならT2がいいかも
+        ec2.InstanceClass.T4G,
+        ec2.InstanceSize.NANO
       ),
       machineImage: amznLinux2,
       securityGroup: securityGroup,

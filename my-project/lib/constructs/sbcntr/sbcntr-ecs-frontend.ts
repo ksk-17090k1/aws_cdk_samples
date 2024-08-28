@@ -41,6 +41,10 @@ export class SbcntrEcsFrontend extends Construct {
         "ExecutionRole",
         `arn:aws:iam::${cdk.Aws.ACCOUNT_ID}:role/ecsTaskExecutionRole`
       ),
+      runtimePlatform: {
+        operatingSystemFamily: ecs.OperatingSystemFamily.LINUX,
+        cpuArchitecture: ecs.CpuArchitecture.ARM64,
+      },
     });
 
     const container = taskDefinition.addContainer("web", {
@@ -84,17 +88,17 @@ export class SbcntrEcsFrontend extends Construct {
       capacityProviderStrategies: [
         {
           capacityProvider: "FARGATE_SPOT",
-          base: 2,
+          base: 0,
           weight: 1,
         },
         {
           capacityProvider: "FARGATE",
-          base: 0,
-          weight: 0,
+          base: 1,
+          weight: 1,
         },
       ],
       desiredCount: 1,
-      //   healthCheckGracePeriod: cdk.Duration.seconds(120),
+      healthCheckGracePeriod: cdk.Duration.seconds(120),
       deploymentController: {
         type: ecs.DeploymentControllerType.ECS,
       },

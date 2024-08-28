@@ -14,6 +14,7 @@ export class SbcntrSg extends Construct {
   readonly sgEgress: ec2.ISecurityGroup;
   readonly sgIngress: ec2.ISecurityGroup;
   readonly sgContainer: ec2.ISecurityGroup;
+  readonly sgManagement: ec2.ISecurityGroup;
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
 
@@ -174,5 +175,6 @@ export class SbcntrSg extends Construct {
     this.sgIngress = sgIngress;
     this.sgEgress = sgEgress;
     this.sgContainer = sgContainer;
+    this.sgManagement = sgManagement;
   }
 }

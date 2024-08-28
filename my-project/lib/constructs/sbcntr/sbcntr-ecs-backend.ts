@@ -92,7 +92,7 @@ export class SbcntrEcsBackend extends Construct {
       capacityProviderStrategies: [
         {
           capacityProvider: "FARGATE_SPOT",
-          base: 2,
+          base: 1,
           weight: 1,
         },
         {
@@ -101,7 +101,7 @@ export class SbcntrEcsBackend extends Construct {
           weight: 0,
         },
       ],
-      desiredCount: 2,
+      desiredCount: 1,
       healthCheckGracePeriod: cdk.Duration.seconds(120),
       deploymentController: {
         type: ecs.DeploymentControllerType.ECS,

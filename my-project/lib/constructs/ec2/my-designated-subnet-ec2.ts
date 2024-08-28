@@ -40,7 +40,8 @@ export class MyDesignatedSubnetEc2 extends Construct {
       // これでもいける？
       //   vpcSubnets: { subnetGroupName: "MyPublic" },
       instanceType: ec2.InstanceType.of(
-        ec2.InstanceClass.T2,
+        // x84ならT2がいいかも
+        ec2.InstanceClass.T4G,
         ec2.InstanceSize.NANO
       ),
       machineImage: new ec2.AmazonLinuxImage({
