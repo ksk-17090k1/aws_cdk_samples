@@ -1,12 +1,11 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { SbcntrVpc } from "./constructs/ecs/sbcntr-vpc";
-import { SbcntrSg } from "./constructs/ecs/sbcntr-sg";
-import { SbcntrVpcEndPoint } from "./constructs/ecs/sbcntr-vpc-endpoint";
-import { SbcntrALbInternal } from "./constructs/ecs/sbcntr-alb-internal";
-import { MyPrivateEcs } from "./constructs/ecs/my-private-ecs";
-import { MyPublicEcs } from "./constructs/ecs/my-public-ecs";
-import { MyPrivateNatEcs } from "./constructs/ecs/my-private-nat-ecs";
+import { SbcntrVpc } from "./constructs/sbcntr/sbcntr-vpc";
+import { SbcntrSg } from "./constructs/sbcntr/sbcntr-sg";
+import { SbcntrALbInternal } from "./constructs/sbcntr/sbcntr-alb-internal";
+import { SbcntrEcsBackend } from "./constructs/sbcntr/sbcntr-ecs-backend";
+import { SbcntrEcsFrontend } from "./constructs/sbcntr/sbcntr-ecs-frontend";
+import { SbcntrALbExternal } from "./constructs/sbcntr/sbcntr-alb-external";
 
 type Props = cdk.StackProps & {};
 
@@ -15,26 +14,30 @@ export class MySbcntrStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: Props) {
     super(scope, id, props);
 
-    // const vpc = new SbcntrVpc(this, "SbcntrVpc", {});
-    // const sg = new SbcntrSg(this, "SbcntrSg", {
+    const vpc = new SbcntrVpc(this, "SbcntrVpc", {});
+    const sg = new SbcntrSg(this, "SbcntrSg", {
+      vpc: vpc.vpc,
+    });
+    const ecsBackend = new SbcntrEcsBackend(this, "SbcntrEcsBackend", {
+      vpc: vpc.vpc,
+      sgService: sg.sgContainer,
+    });
+    const albInternal = new SbcntrALbInternal(this, "SbcntrALbInternal", {
+      vpc: vpc.vpc,
+      sgContainer: sg.sgContainer,
+      fargateService: ecsBackend.fargateService,
+    });
+
+    // const ecsFrontend = new SbcntrEcsFrontend(this, "SbcntrEcsFrontend", {
     //   vpc: vpc.vpc,
+    //   sgService: sg.sgIngress,
+    //   backendHost: albInternal.loadBalancerDnsName,
     // });
 
-    // new SbcntrVpcEndPoint(this, "SbcntrVpcEndPoint", {
+    // new SbcntrALbExternal(this, "SbcntrALbExternal", {
     //   vpc: vpc.vpc,
-    //   sgEgress: sg.sgEgress,
-    // });
-
-    // new SbcntrALbInternal(this, "SbcntrALbInternal", {
-    //   vpc: vpc.vpc,
-    //   sgContainer: sg.sgContainer,
-    // });
-
-    new MyPublicEcs(this, "MyBasicEcs", {});
-    // new MyPrivateNatEcs(this, "MyPrivateNatEcs", {});
-    // new MyPrivateEcs(this, "MyPrivateEcs", {
-    //   vpc: vpc.vpc,
-    //   sgContainer: sg.sgContainer,
+    //   sgIngress: sg.sgIngress,
+    //   fargateService: ecsFrontend.fargateService,
     // });
   }
 }

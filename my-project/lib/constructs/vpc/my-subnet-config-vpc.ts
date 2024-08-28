@@ -1,11 +1,26 @@
 import { Construct } from "constructs";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 
-type Props = {};
+type Props = {
+  cheapVpc: boolean;
+};
 
 export class MySubnetConfigVpc extends Construct {
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
+
+    // natGatewayProvider を指定する場合
+    const natInstance = ec2.NatProvider.instanceV2({
+      instanceType: ec2.InstanceType.of(
+        ec2.InstanceClass.T4G,
+        ec2.InstanceSize.NANO
+      ),
+      machineImage: ec2.MachineImage.latestAmazonLinux2023({
+        cpuType: ec2.AmazonLinuxCpuType.ARM_64,
+      }),
+      defaultAllowedTraffic: ec2.NatTrafficDirection.OUTBOUND_ONLY,
+    });
+
     const vpc = new ec2.Vpc(this, "MyVpc", {
       // 以下のような設定にすると、各Azごとに3つのサブネットが作成されるが、
       // NATは3つの"application"サブネットで共有される!
@@ -13,6 +28,8 @@ export class MySubnetConfigVpc extends Construct {
       // Ref: https://dev.classmethod.jp/articles/tsnote-nat-gateway-notification-redundancy/
       // どのAzのどのサブネットにNATが作成されたかはコンソールを見れば確認できる
       maxAzs: 3,
+      // NAT Gatewayの代わりに安いEC2インスタンスでNATを立てる場合は natGatewayProvider を指定する
+      natGatewayProvider: natInstance,
       natGateways: 1,
       // default: The VPC CIDR will be evenly divided between 1 public and 1 private subnet per AZ
       subnetConfiguration: [
@@ -37,5 +54,12 @@ export class MySubnetConfigVpc extends Construct {
         },
       ],
     });
+
+    // natGatewayProvider を指定する場合
+    // NATインスタンスはVPC内からのみアクセス許可
+    natInstance.securityGroup.addIngressRule(
+      ec2.Peer.ipv4(vpc.vpcCidrBlock),
+      ec2.Port.allTraffic()
+    );
   }
 }

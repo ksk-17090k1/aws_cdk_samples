@@ -2,7 +2,6 @@ import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
-import * as ecs from "aws-cdk-lib/aws-ecs";
 
 type Props = {
   vpc: ec2.IVpc;
@@ -10,7 +9,7 @@ type Props = {
   fargateService: elbv2.IApplicationLoadBalancerTarget;
 };
 
-export class SbcntrALbExternal extends Construct {
+export class MyAlb extends Construct {
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
 

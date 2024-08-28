@@ -83,20 +83,38 @@ export class SbcntrSg extends Construct {
 
     // --- FEからBEまでの接続 ---
     // ingress -> frontContainer -> internal -> container
+    // NOTE: NATで通信する形に変えたので443も足した
     sgFrontContainer.connections.allowFrom(
       sgIngress,
       ec2.Port.tcp(80),
       "HTTP from Ingress"
     );
+    sgFrontContainer.connections.allowFrom(
+      sgIngress,
+      ec2.Port.tcp(443),
+      "HTTPS from Ingress"
+    );
+
     sgInternal.connections.allowFrom(
       sgFrontContainer,
       ec2.Port.tcp(80),
       "HTTP from front container"
     );
+    sgInternal.connections.allowFrom(
+      sgFrontContainer,
+      ec2.Port.tcp(443),
+      "HTTPS from front container"
+    );
+
     sgContainer.connections.allowFrom(
       sgInternal,
       ec2.Port.tcp(80),
       "HTTP from internal LB"
+    );
+    sgContainer.connections.allowFrom(
+      sgInternal,
+      ec2.Port.tcp(443),
+      "HTTPS from internal LB"
     );
 
     // --- DBへの接続 ---

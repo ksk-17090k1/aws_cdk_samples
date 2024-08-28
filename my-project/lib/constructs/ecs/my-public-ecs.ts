@@ -6,6 +6,7 @@ import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import { Platform } from "aws-cdk-lib/aws-ecr-assets";
+import * as servicediscovery from "aws-cdk-lib/aws-servicediscovery";
 
 type Props = {};
 
@@ -88,9 +89,15 @@ export class MyPublicEcs extends Construct {
       }
     );
 
+    // log setting
+    const logGroup = new logs.LogGroup(this, "LogGroupBackend", {
+      logGroupName: `/ecs/sbcntr-backend-log-group`,
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
     const logDriver = new ecs.AwsLogDriver({
       streamPrefix: "my-ecs",
-      logRetention: logs.RetentionDays.ONE_WEEK,
+      logGroup: logGroup,
     });
 
     // ローカルのDockerfileを使ってイメージをビルドする場合
@@ -153,13 +160,26 @@ export class MyPublicEcs extends Construct {
       ec2.Port.tcp(443),
       "Allow HTTPS from anywhere"
     );
+
+    const NAMESPACE = "local";
+    const SERVICE_NAME = "sbcntr-backend-service";
+    const dnsNamespace = new servicediscovery.PrivateDnsNamespace(
+      this,
+      "ServiceDiscovery",
+      {
+        name: NAMESPACE,
+        vpc,
+      }
+    );
+
     const service = new ecs.FargateService(this, "Service", {
       serviceName: "my-basic-service",
       cluster,
       taskDefinition: fargateTaskDefinition,
       // 基本LATESTで良いと思われる
       platformVersion: ecs.FargatePlatformVersion.LATEST,
-      // TODO: subnetを指定する方法をまとめたい。3種類あるはず。種類、ID、IDで検索
+      // TODO: subnetを指定する方法をまとめたい。4種類あるはず。種類、ID、IDで検索、名前
+      // 名前：{ subnetGroupName: "sbcntr-subnet-public-management" },
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       securityGroups: [sgService],
       capacityProviderStrategies: [
@@ -191,6 +211,13 @@ export class MyPublicEcs extends Construct {
       //  ref: https://zenn.dev/kenryo/articles/ecs-min-max-helth-percentage
       minHealthyPercent: 100,
       maxHealthyPercent: 200,
+      // ECSタスクのプライベートIPに対してDNS名を付与する
+      cloudMapOptions: {
+        name: SERVICE_NAME,
+        cloudMapNamespace: dnsNamespace,
+        dnsRecordType: servicediscovery.DnsRecordType.A,
+        dnsTtl: cdk.Duration.seconds(30),
+      },
     });
 
     this.fargateService = service;
