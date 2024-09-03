@@ -11,13 +11,17 @@ export class MyVpcStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: Props) {
     super(scope, id, props);
 
-    new MyBasicVpc(this, "MyBasicVpc", {});
-    new MySubnetConfigVpc(this, "MySubnetConfigVpC", {});
-    new MyCustomSubnetVpc(this, "MyCustomSubnetVpc", {});
-    new MySpecificallyCustomSubnetVpc(
-      this,
-      "MySpecificallyCustomSubnetVpc",
-      {}
-    );
+    // new MyBasicVpc(this, "MyBasicVpc", {
+    //   vpcId: "vpc-1234567890abcdef0",
+    // });
+    // new MySubnetConfigVpc(this, "MySubnetConfigVpC", {
+    //   cheapVpc: true,
+    // });
+    // new MyCustomSubnetVpc(this, "MyCustomSubnetVpc", {});
+    // new MySpecificallyCustomSubnetVpc(
+    //   this,
+    //   "MySpecificallyCustomSubnetVpc",
+    //   {}
+    // );
   }
 }

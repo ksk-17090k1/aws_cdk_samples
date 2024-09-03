@@ -5,8 +5,14 @@ import { MyLambdaStack } from "../lib/my-lambda-stack";
 import { MyVpcStack } from "../lib/my-vpc-stack";
 import { MyEc2Stack } from "../lib/my-ec2-stack";
 import { MySbcntrStack } from "../lib/my-sbcntr-stack";
+import { ScopedAws } from "aws-cdk-lib";
+import { MyEcsStack } from "../lib/my-ecs-stack";
 
 const app = new cdk.App();
+
+// Set Resource Name
+const resourceName = "myapp";
+
 // new MyLambdaStack(app, "MyLambdaStack", {
 //   env: {
 //     account: process.env.CDK_DEFAULT_ACCOUNT,
@@ -27,11 +33,19 @@ const app = new cdk.App();
 //   },
 // });
 
-const stackVersion = app.node.tryGetContext("stackVersion");
+// new MySbcntrStack(app, `MySbcntrStack${resourceName}`, {
+//   env: {
+//     account: process.env.CDK_DEFAULT_ACCOUNT,
+//     region: "ap-northeast-1",
+//   },
+// });
 
-new MySbcntrStack(app, `MySbcntrStack${stackVersion}`, {
+new MyEcsStack(app, "MyEcsStack", {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: "ap-northeast-1",
   },
+  accountId: process.env.CDK_DEFAULT_ACCOUNT,
+  region: "ap-northeast-1",
+  resourceName,
 });
