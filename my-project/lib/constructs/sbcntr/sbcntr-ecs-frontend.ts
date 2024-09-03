@@ -56,7 +56,7 @@ export class SbcntrEcsFrontend extends Construct {
         streamPrefix: "ecs",
       }),
       environment: {
-        // SESSION_SECRET_KEY: "41b678c65b37bf99c37bcab522802760",
+        SESSION_SECRET_KEY: "41b678c65b37bf99c37bcab522802760",
         APP_SERVICE_HOST: `http://${props.backendHost}`,
         NOTIF_SERVICE_HOST: `http://${props.backendHost}`,
       },

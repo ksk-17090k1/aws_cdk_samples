@@ -66,16 +66,16 @@ export class SbcntrEcsBackend extends Construct {
     });
 
     // name spaceはroute53のホストゾーン名に相当
-    const NAMESPACE = "local";
-    const SERVICE_NAME = "sbcntr-backend-service";
-    const dnsNamespace = new servicediscovery.PrivateDnsNamespace(
-      this,
-      "ServiceDiscovery",
-      {
-        name: NAMESPACE,
-        vpc,
-      }
-    );
+    // const NAMESPACE = "local";
+    // const SERVICE_NAME = "sbcntr-backend-service";
+    // const dnsNamespace = new servicediscovery.PrivateDnsNamespace(
+    //   this,
+    //   "ServiceDiscovery",
+    //   {
+    //     name: NAMESPACE,
+    //     vpc,
+    //   }
+    // );
 
     const service = new ecs.FargateService(this, "Service", {
       serviceName: "sbcntr-backend-service",
@@ -108,12 +108,12 @@ export class SbcntrEcsBackend extends Construct {
       },
       minHealthyPercent: 100,
       maxHealthyPercent: 200,
-      cloudMapOptions: {
-        name: SERVICE_NAME,
-        cloudMapNamespace: dnsNamespace,
-        dnsRecordType: servicediscovery.DnsRecordType.A,
-        dnsTtl: cdk.Duration.seconds(30),
-      },
+      // cloudMapOptions: {
+      //   name: SERVICE_NAME,
+      //   cloudMapNamespace: dnsNamespace,
+      //   dnsRecordType: servicediscovery.DnsRecordType.A,
+      //   dnsTtl: cdk.Duration.seconds(30),
+      // },
     });
 
     this.fargateService = service;

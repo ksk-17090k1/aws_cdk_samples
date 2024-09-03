@@ -125,7 +125,7 @@ export class MyCustomEc2 extends Construct {
         subnetType: ec2.SubnetType.PUBLIC,
       }),
       instanceType: ec2.InstanceType.of(
-        // x84ならT2がいいかも
+        // ARMならT4g, x84ならT2がいいかも
         ec2.InstanceClass.T4G,
         ec2.InstanceSize.NANO
       ),

@@ -37,10 +37,8 @@ export class MyDesignatedSubnetEc2 extends Construct {
       availabilityZone: "ap-northeast-1a",
       vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
-      // これでもいける？
-      //   vpcSubnets: { subnetGroupName: "MyPublic" },
       instanceType: ec2.InstanceType.of(
-        // x84ならT2がいいかも
+        // ARMならT4g, x84ならT2がいいかも
         ec2.InstanceClass.T4G,
         ec2.InstanceSize.NANO
       ),

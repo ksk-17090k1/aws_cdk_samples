@@ -140,7 +140,7 @@ export class MyPublicEcs extends Construct {
     //   // AWSが用意しているサンプルイメージ (TODO: なぜかエラーがでるので調査)
     //   // NOTE: ECRのpublic repositoryはVPCエンドポイントでは接続できないらしいので注意！
     //   //   image: ecs.ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
-    //   // ECRの命名規則に従ったイメージ名 (TODO: なぜかエラーがでるので調査)
+    //   // ECRの命名規則に従ったイメージ名
     //   image: ecs.ContainerImage.fromRegistry(
     //     `${cdk.Aws.ACCOUNT_ID}.dkr.ecr.${cdk.Aws.REGION}.amazonaws.com/sbcntr-backend:v1`
     //   ),
@@ -161,16 +161,17 @@ export class MyPublicEcs extends Construct {
       "Allow HTTPS from anywhere"
     );
 
+    // １日0.5ドル程度のコストがかかるので注意
     const NAMESPACE = "local";
     const SERVICE_NAME = "sbcntr-backend-service";
-    const dnsNamespace = new servicediscovery.PrivateDnsNamespace(
-      this,
-      "ServiceDiscovery",
-      {
-        name: NAMESPACE,
-        vpc,
-      }
-    );
+    // const dnsNamespace = new servicediscovery.PrivateDnsNamespace(
+    //   this,
+    //   "ServiceDiscovery",
+    //   {
+    //     name: NAMESPACE,
+    //     vpc,
+    //   }
+    // );
 
     const service = new ecs.FargateService(this, "Service", {
       serviceName: "my-basic-service",
@@ -178,8 +179,6 @@ export class MyPublicEcs extends Construct {
       taskDefinition: fargateTaskDefinition,
       // 基本LATESTで良いと思われる
       platformVersion: ecs.FargatePlatformVersion.LATEST,
-      // TODO: subnetを指定する方法をまとめたい。4種類あるはず。種類、ID、IDで検索、名前
-      // 名前：{ subnetGroupName: "sbcntr-subnet-public-management" },
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       securityGroups: [sgService],
       capacityProviderStrategies: [
@@ -212,12 +211,12 @@ export class MyPublicEcs extends Construct {
       minHealthyPercent: 100,
       maxHealthyPercent: 200,
       // ECSタスクのプライベートIPに対してDNS名を付与する
-      cloudMapOptions: {
-        name: SERVICE_NAME,
-        cloudMapNamespace: dnsNamespace,
-        dnsRecordType: servicediscovery.DnsRecordType.A,
-        dnsTtl: cdk.Duration.seconds(30),
-      },
+      // cloudMapOptions: {
+      //   name: SERVICE_NAME,
+      //   cloudMapNamespace: dnsNamespace,
+      //   dnsRecordType: servicediscovery.DnsRecordType.A,
+      //   dnsTtl: cdk.Duration.seconds(30),
+      // },
     });
 
     this.fargateService = service;

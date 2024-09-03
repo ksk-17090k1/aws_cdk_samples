@@ -24,10 +24,8 @@ export class MyBasicEc2 extends Construct {
     const instance = new ec2.Instance(this, "Instance", {
       vpc,
       vpcSubnets: { subnetGroupName: "public-subnet-1" },
-      // これでもいけそう
-      //   vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       instanceType: ec2.InstanceType.of(
-        // x84ならT2がいいかも
+        // ARMならT4g, x84ならT2がいいかも
         ec2.InstanceClass.T4G,
         ec2.InstanceSize.NANO
       ),
