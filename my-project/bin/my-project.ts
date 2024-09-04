@@ -7,6 +7,7 @@ import { MyEc2Stack } from "../lib/my-ec2-stack";
 import { MySbcntrStack } from "../lib/my-sbcntr-stack";
 import { ScopedAws } from "aws-cdk-lib";
 import { MyEcsStack } from "../lib/my-ecs-stack";
+import { MyWafStack } from "../lib/my-waf-stack";
 
 const app = new cdk.App();
 
@@ -40,12 +41,21 @@ const resourceName = "myapp";
 //   },
 // });
 
-new MyEcsStack(app, "MyEcsStack", {
+// new MyEcsStack(app, "MyEcsStack", {
+//   env: {
+//     account: process.env.CDK_DEFAULT_ACCOUNT,
+//     region: "ap-northeast-1",
+//   },
+//   accountId: process.env.CDK_DEFAULT_ACCOUNT,
+//   region: "ap-northeast-1",
+//   resourceName,
+// });
+
+new MyWafStack(app, "MyWafStack", {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: "ap-northeast-1",
+    // region: "ap-northeast-1",
+    // cloud front のWAFは us-east-1 でしか使えない
+    region: "us-east-1",
   },
-  accountId: process.env.CDK_DEFAULT_ACCOUNT,
-  region: "ap-northeast-1",
-  resourceName,
 });
