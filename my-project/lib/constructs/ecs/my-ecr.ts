@@ -45,6 +45,24 @@ export class MyEcr extends Construct {
       imageTagMutability: ecr.TagMutability.IMMUTABLE,
     });
 
+    // タグの命名規則を利用したルール
+    const ecrRepository2 = new ecr.Repository(this, `${resourceName}EcrRepo2`, {
+      repositoryName: `${resourceName}`,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      emptyOnDelete: true,
+      lifecycleRules: [
+        {
+          rulePriority: 1,
+          // tagPrefixList か tagPatternList を指定する場合は、tagStatus は TAGGED にする
+          tagStatus: ecr.TagStatus.TAGGED,
+          // tagPrefixList か tagPatternList のどちらかのみを指定
+          tagPrefixList: ["stg-", "dev-"],
+          // tagPatternList: ["*"],
+          maxImageCount: 3,
+        },
+      ],
+    });
+
     // --- cdk-ecr-deployment を使う場合 ---
     const dockerImageAsset = new DockerImageAsset(
       this,
