@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "aws-cdk-lib": "2.147.2",
+    "cdk-docker-image-deployment": "^0.0.598",
     "cdk-ec2-key-pair": "^4.0.1",
     "cdk-ecr-deployment": "^3.0.97",
     "constructs": "^10.0.0",
