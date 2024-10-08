@@ -218,6 +218,15 @@ export class MyPublicEcs extends Construct {
       //   dnsRecordType: servicediscovery.DnsRecordType.A,
       //   dnsTtl: cdk.Duration.seconds(30),
       // },
+      // デプロイ失敗を繰り返している場合にデプロイ停止する
+      circuitBreaker: {
+        // デプロイ停止時にロールバックするか
+        rollback: false,
+      },
+      // コンテナにexecするための設定
+      // タスクロールへのSSMセッションマネージャーの権限アタッチも必要らしい
+      // ref: https://dev.classmethod.jp/articles/ecs-exec-enableexecutecommand-error/
+      // enableExecuteCommand: true,
     });
 
     this.fargateService = service;
