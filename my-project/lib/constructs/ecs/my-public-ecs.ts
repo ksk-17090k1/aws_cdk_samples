@@ -74,6 +74,7 @@ export class MyPublicEcs extends Construct {
         cpu: 256,
         memoryLimitMiB: 512,
         // cpu, memoryと相性があるので以下確認すること
+        // ref: https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/developerguide/task-cpu-memory-error.html
         // ref: operatingSystemFamily: ecs.OperatingSystemFamily.WINDOWS_SERVER_2019_CORE,
         runtimePlatform: {
           operatingSystemFamily: ecs.OperatingSystemFamily.LINUX,
