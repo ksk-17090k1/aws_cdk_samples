@@ -163,16 +163,32 @@ export class MyPublicEcs extends Construct {
     );
 
     // １日0.5ドル程度のコストがかかるので注意
+    // NAMESPACE がホストゾーンの名前になる
     const NAMESPACE = "local";
     const SERVICE_NAME = "sbcntr-backend-service";
-    // const dnsNamespace = new servicediscovery.PrivateDnsNamespace(
-    //   this,
-    //   "ServiceDiscovery",
-    //   {
-    //     name: NAMESPACE,
-    //     vpc,
-    //   }
-    // );
+    const privateDnsNamespace = new servicediscovery.PrivateDnsNamespace(
+      this,
+      "ServiceDiscovery",
+      {
+        name: NAMESPACE,
+        vpc,
+      }
+    );
+    // TODO: 動作検証してないのでやる
+    const ecsServiceDiscovery = privateDnsNamespace.createService(
+      "EcsServiceDiscovery",
+      {
+        name: SERVICE_NAME,
+        dnsRecordType: servicediscovery.DnsRecordType.A,
+        // cloud mapとAPI Gatewayと組み合わせるにはSRVレコードが必要なことをメモする
+        // dnsRecordType: servicediscovery.DnsRecordType.SRV,
+        dnsTtl: cdk.Duration.seconds(30),
+        // TODO: しらべる
+        // customHealthCheck: {
+        //   failureThreshold: 1,
+        // },
+      }
+    );
 
     const service = new ecs.FargateService(this, "Service", {
       serviceName: "my-basic-service",
@@ -211,13 +227,6 @@ export class MyPublicEcs extends Construct {
       //  ref: https://zenn.dev/kenryo/articles/ecs-min-max-helth-percentage
       minHealthyPercent: 100,
       maxHealthyPercent: 200,
-      // ECSタスクのプライベートIPに対してDNS名を付与する
-      // cloudMapOptions: {
-      //   name: SERVICE_NAME,
-      //   cloudMapNamespace: dnsNamespace,
-      //   dnsRecordType: servicediscovery.DnsRecordType.A,
-      //   dnsTtl: cdk.Duration.seconds(30),
-      // },
       // デプロイ失敗を繰り返している場合にデプロイ停止する
       circuitBreaker: {
         // デプロイ停止時にロールバックするか
@@ -227,6 +236,14 @@ export class MyPublicEcs extends Construct {
       // タスクロールへのSSMセッションマネージャーの権限アタッチも必要らしい
       // ref: https://dev.classmethod.jp/articles/ecs-exec-enableexecutecommand-error/
       // enableExecuteCommand: true,
+    });
+
+    // FargateService に対して Cloud Map の紐づけを行う
+    // Serviceの定義の中でも指定できるが、こっちの書き方の方が柔軟
+    service.associateCloudMapService({
+      service: ecsServiceDiscovery,
+      // SRVレコードの場合はポートの指定が必要
+      // containerPort: 8080,
     });
 
     this.fargateService = service;
