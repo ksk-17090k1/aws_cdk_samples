@@ -3,5 +3,9 @@
     "ap-northeast-1a",
     "ap-northeast-1c",
     "ap-northeast-1d"
-  ]
+  ],
+  "hosted-zone:account=737276082677:domainName=ksk-17090k1.com:region=ap-northeast-1": {
+    "Id": "/hostedzone/Z10041037KVSV8Q35NW4",
+    "Name": "ksk-17090k1.com."
+  }
 }

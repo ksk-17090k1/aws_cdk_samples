@@ -1,18 +1,23 @@
 #!/usr/bin/env node
 import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
-import { MyLambdaStack } from "../lib/my-lambda-stack";
-import { MyVpcStack } from "../lib/my-vpc-stack";
-import { MyEc2Stack } from "../lib/my-ec2-stack";
-import { MySbcntrStack } from "../lib/my-sbcntr-stack";
-import { ScopedAws } from "aws-cdk-lib";
-import { MyEcsStack } from "../lib/my-ecs-stack";
-import { MyWafStack } from "../lib/my-waf-stack";
+import { MyDomainStack } from "../lib/my-domain-stack";
 
 const app = new cdk.App();
 
 // Set Resource Name
 const resourceName = "myapp";
+
+const publicDomain = new MyDomainStack(app, "MyDomainStack", {
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    // region: "'us-east-1'",
+    region: "ap-northeast-1",
+  },
+  // クロスリージョンでリソースを渡したい場合は以下を指定
+  // NOTE: 渡す先のスタックにも同じように指定する必要あり。
+  crossRegionReferences: true,
+});
 
 // new MyLambdaStack(app, "MyLambdaStack", {
 //   env: {
@@ -20,6 +25,7 @@ const resourceName = "myapp";
 //     region: "ap-northeast-1",
 //   },
 // });
+
 // new MyVpcStack(app, "MyVpcStack", {
 //   env: {
 //     account: process.env.CDK_DEFAULT_ACCOUNT,
@@ -51,11 +57,11 @@ const resourceName = "myapp";
 //   resourceName,
 // });
 
-new MyWafStack(app, "MyWafStack", {
-  env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT,
-    // region: "ap-northeast-1",
-    // cloud front のWAFは us-east-1 でしか使えない
-    region: "us-east-1",
-  },
-});
+// new MyWafStack(app, "MyWafStack", {
+//   env: {
+//     account: process.env.CDK_DEFAULT_ACCOUNT,
+//     // region: "ap-northeast-1",
+//     // cloud front のWAFは us-east-1 でしか使えない
+//     region: "us-east-1",
+//   },
+// });
