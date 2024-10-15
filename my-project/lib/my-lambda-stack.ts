@@ -9,8 +9,11 @@ export class MyLambdaStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: Props) {
     super(scope, id, props);
 
+    // TODO: 同じ内容をHTTP APIでも書く
+
     // TODO: DockerImageFunction
     // ref: https://www.softbank.jp/biz/blog/cloud-technology/articles/202304/cdk-lambda/
+    // あとコスト管理の機能のコードを見ればよい
 
     // NOTE: JavaScriptの場合、拡張子をmjsにしないと動かない
     const jsHandler = new aws_lambda.Function(this, "MyHandler", {

@@ -65,6 +65,8 @@ export class MySecurityGroup extends Construct {
       description: "Security Group of management server",
     });
 
+    // NOTE: ec2.Peer.ipv4(vpc.vpcCidrBlock), と書くとVPC内の通信のみを許可する設定が書ける
+
     // FEのALBはHTTPのみを許可
     sgIngress.addIngressRule(
       ec2.Peer.anyIpv4(),
@@ -80,6 +82,8 @@ export class MySecurityGroup extends Construct {
     // allowFromを使うとアウトバウンドのルールも自動で追加される
     // ただし allowAllOutbound をfalseにしておく必要がある
     // ref: https://qiita.com/akwayne/items/5af3c99e4e9786040598
+
+    // NOTE: ec2.Port.allTraffic() と書くと全てのポートが許可される
 
     // --- FEからBEまでの接続 ---
     // ingress -> frontContainer -> internal -> backendContainer

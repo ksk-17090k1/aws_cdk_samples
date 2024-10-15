@@ -114,6 +114,7 @@ export class MyPublicEcs extends Construct {
         platform: Platform.LINUX_AMD64,
       }),
       // 通信がawsvpcかhost network modeを使用している場合は、hostportはコンテナポートと同じ値か、指定を省略できる。
+      // 複数も指定出来る：portMappings: [{ containerPort: 8080, hostPort: 8080 }, { containerPort: 80, hostPort: 80 }],
       portMappings: [
         { containerPort: 3000, hostPort: 3000, protocol: ecs.Protocol.TCP },
       ],
@@ -164,7 +165,7 @@ export class MyPublicEcs extends Construct {
 
     // １日0.5ドル程度のコストがかかるので注意
     // NAMESPACE がホストゾーンの名前になる
-    const NAMESPACE = "local";
+    const NAMESPACE = "myapp.local";
     const SERVICE_NAME = "sbcntr-backend-service";
     const privateDnsNamespace = new servicediscovery.PrivateDnsNamespace(
       this,
@@ -174,19 +175,14 @@ export class MyPublicEcs extends Construct {
         vpc,
       }
     );
-    // TODO: 動作検証してないのでやる
     const ecsServiceDiscovery = privateDnsNamespace.createService(
       "EcsServiceDiscovery",
       {
         name: SERVICE_NAME,
         dnsRecordType: servicediscovery.DnsRecordType.A,
-        // cloud mapとAPI Gatewayと組み合わせるにはSRVレコードが必要なことをメモする
+        // cloud mapとAPI Gatewayと組み合わせるにはSRVレコードが必要!
         // dnsRecordType: servicediscovery.DnsRecordType.SRV,
         dnsTtl: cdk.Duration.seconds(30),
-        // TODO: しらべる
-        // customHealthCheck: {
-        //   failureThreshold: 1,
-        // },
       }
     );
 

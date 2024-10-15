@@ -134,7 +134,7 @@ export class MyCustomEc2 extends Construct {
       // パブリックIPの付与。EC2をパブリックサブネットに置くけどEIPは使用しないときにtrue
       associatePublicIpAddress: true,
       role: role,
-      keyName: keyPair.keyPairName,
+      keyPair: keyPair,
       // SSMセッションマネージャからログインする場合に必要
       ssmSessionPermissions: true,
       // デフォルトで５分おきに取得するメトリクスを1分ごとにする。コストが増えるので注意。

@@ -26,7 +26,7 @@ export class MyBasicEc2 extends Construct {
       vpcSubnets: { subnetGroupName: "public-subnet-1" },
       instanceType: ec2.InstanceType.of(
         // ARMならT4g, x84ならT2がいいかも
-        ec2.InstanceClass.T4G,
+        ec2.InstanceClass.T2,
         ec2.InstanceSize.NANO
       ),
       machineImage: new ec2.AmazonLinuxImage({

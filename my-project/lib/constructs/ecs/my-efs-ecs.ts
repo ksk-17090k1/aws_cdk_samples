@@ -7,8 +7,6 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import { Platform } from "aws-cdk-lib/aws-ecr-assets";
 import * as efs from "aws-cdk-lib/aws-efs";
 
-// TODO: 実際にデプロイして動作確認してないのでやる
-
 type Props = {};
 
 export class MyPublicEcs extends Construct {
