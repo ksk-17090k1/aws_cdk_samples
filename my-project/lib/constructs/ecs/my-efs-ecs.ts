@@ -80,6 +80,8 @@ export class MyPublicEcs extends Construct {
         },
       })
     );
+    // ポートの開放はこれでもいけそう
+    // fileSystem.connections.allowDefaultPortFrom(sgService);
 
     const cluster = new ecs.Cluster(this, `Cluster${stackVersion}`, {
       clusterName: `my-public-cluster${stackVersion}`,
@@ -101,7 +103,7 @@ export class MyPublicEcs extends Construct {
         },
         volumes: [
           {
-            name: "promptfoo-efs",
+            name: "promptfoo-volume",
             efsVolumeConfiguration: {
               fileSystemId: fileSystem.fileSystemId,
               // デフォルトは"/" (root)
@@ -123,7 +125,7 @@ export class MyPublicEcs extends Construct {
       logGroup: logGroup,
     });
 
-    fargateTaskDefinition.addContainer("web", {
+    const containerDefinition = fargateTaskDefinition.addContainer("web", {
       image: ecs.ContainerImage.fromAsset("./lib/constructs/ecs/", {
         platform: Platform.LINUX_AMD64,
       }),
@@ -134,6 +136,13 @@ export class MyPublicEcs extends Construct {
         STAGE: "prod",
       },
       logging: logDriver,
+    });
+
+    // ここの設定を忘れないように！
+    containerDefinition.addMountPoints({
+      containerPath: "/root/.promptfoo",
+      readOnly: false,
+      sourceVolume: "promptfoo-volume",
     });
 
     const service = new ecs.FargateService(this, "Service", {

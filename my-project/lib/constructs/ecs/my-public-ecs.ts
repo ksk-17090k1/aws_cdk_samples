@@ -164,21 +164,19 @@ export class MyPublicEcs extends Construct {
     );
 
     // １日0.5ドル程度のコストがかかるので注意
-    // NAMESPACE がホストゾーンの名前になる
-    const NAMESPACE = "myapp.local";
-    const SERVICE_NAME = "sbcntr-backend-service";
     const privateDnsNamespace = new servicediscovery.PrivateDnsNamespace(
       this,
       "ServiceDiscovery",
       {
-        name: NAMESPACE,
+        // ここがホストゾーンの名前になる
+        name: "myapp.local",
         vpc,
       }
     );
     const ecsServiceDiscovery = privateDnsNamespace.createService(
       "EcsServiceDiscovery",
       {
-        name: SERVICE_NAME,
+        name: "sbcntr-backend-service",
         dnsRecordType: servicediscovery.DnsRecordType.A,
         // cloud mapとAPI Gatewayと組み合わせるにはSRVレコードが必要!
         // dnsRecordType: servicediscovery.DnsRecordType.SRV,
@@ -231,7 +229,7 @@ export class MyPublicEcs extends Construct {
       // コンテナにexecするための設定
       // タスクロールへのSSMセッションマネージャーの権限アタッチも必要らしい
       // ref: https://dev.classmethod.jp/articles/ecs-exec-enableexecutecommand-error/
-      // enableExecuteCommand: true,
+      enableExecuteCommand: true,
     });
 
     // FargateService に対して Cloud Map の紐づけを行う
