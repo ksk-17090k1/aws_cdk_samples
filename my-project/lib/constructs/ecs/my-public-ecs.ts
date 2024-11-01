@@ -57,12 +57,39 @@ export class MyPublicEcs extends Construct {
     //   taskDefinition: ec2TaskDefinition,
     // });
 
-    const dummyRoll = new iam.Role(this, "MyDummyRole", {
+    // AWSマネジメントコンソールから作成した場合に自動で付与される権限をつける
+    // refs: https://dev.classmethod.jp/articles/ecs-exec-enableexecutecommand-error/
+    const executionRole = new iam.Role(this, "PromptfooExecRole", {
       assumedBy: new iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName("AdministratorAccess"),
-      ],
     });
+    executionRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+        ],
+        resources: ["*"],
+      })
+    );
+    // FargateにExecするための権限
+    const taskRole = new iam.Role(this, "PromptfooTaskRole", {
+      assumedBy: new iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
+    });
+    taskRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel",
+        ],
+        resources: ["*"],
+      })
+    );
 
     // Fargate Service
     const fargateTaskDefinition = new ecs.FargateTaskDefinition(
@@ -83,10 +110,9 @@ export class MyPublicEcs extends Construct {
         },
         // コンテナを立ち上げるときにECSが使うロール
         // 実態としては、ECRからのイメージのpullとCloudWatch Logsへの書き込みを行う権限
-        // 指定しなければ勝手にCDKが作ってくれるので指定しないべき。
-        // executionRole: dummyRoll,
+        executionRole: executionRole,
         // コンテナに付与されるロール
-        taskRole: dummyRoll,
+        taskRole: taskRole,
       }
     );
 
