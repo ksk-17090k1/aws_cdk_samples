@@ -53,39 +53,6 @@ export class MyPublicEcs extends Construct {
       "Access from EFS"
     );
 
-    const fileSystem = new efs.FileSystem(this, "PromptfooEfsFileSystem", {
-      vpc: vpc,
-      // private subnetへの配置が推奨
-      vpcSubnets: {
-        subnetType: ec2.SubnetType.PUBLIC,
-      },
-      securityGroup: sgEfs,
-      encrypted: true,
-      // 一定期間アクセスされなかったファイルをInfrequent Access (IA) storageへ移動する
-      lifecyclePolicy: efs.LifecyclePolicy.AFTER_14_DAYS,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      // コストを抑える観点では以下2つは以下の設定で良い
-      performanceMode: efs.PerformanceMode.GENERAL_PURPOSE,
-      throughputMode: efs.ThroughputMode.BURSTING,
-      // 性能求めるなら以下だが、かなり高額なので注意
-      // throughputMode: efs.ThroughputMode.PROVISIONED,
-      // provisionedThroughputPerSecond: cdk.Size.gibibytes(1),
-    });
-    // マウントターゲット経由でのみEFSへのアクセスを許可
-    fileSystem.addToResourcePolicy(
-      new iam.PolicyStatement({
-        actions: ["elasticfilesystem:ClientMount"],
-        principals: [new iam.AnyPrincipal()],
-        conditions: {
-          Bool: {
-            "elasticfilesystem:AccessedViaMountTarget": "true",
-          },
-        },
-      })
-    );
-    // ポートの開放はこれでもいけそう
-    // fileSystem.connections.allowDefaultPortFrom(sgService);
-
     const cluster = new ecs.Cluster(this, `Cluster${stackVersion}`, {
       clusterName: `my-public-cluster${stackVersion}`,
       vpc,
@@ -104,16 +71,6 @@ export class MyPublicEcs extends Construct {
           operatingSystemFamily: ecs.OperatingSystemFamily.LINUX,
           cpuArchitecture: ecs.CpuArchitecture.X86_64,
         },
-        volumes: [
-          {
-            name: "promptfoo-volume",
-            efsVolumeConfiguration: {
-              fileSystemId: fileSystem.fileSystemId,
-              // デフォルトは"/" (root)
-              // rootDirectory: '/models',
-            },
-          },
-        ],
       }
     );
 
@@ -141,12 +98,30 @@ export class MyPublicEcs extends Construct {
       logging: logDriver,
     });
 
-    // ここの設定を忘れないように！
-    containerDefinition.addMountPoints({
+    // EBS
+    const volume = new ecs.ServiceManagedVolume(this, "MyEBSVolume", {
+      name: "myEbs1",
+      managedEBSVolume: {
+        size: cdk.Size.gibibytes(15),
+        // 一般的なのはgp3だが、データベースなど高いIOPSを求める場合はio2やio1が良いらしい
+        volumeType: ec2.EbsDeviceVolumeType.GP3,
+        // XT4でも良いかも
+        fileSystemType: ecs.FileSystemType.XFS,
+        tagSpecifications: [
+          {
+            tags: {
+              purpose: "dev",
+            },
+            propagateTags: ecs.EbsPropagatedTagSource.SERVICE,
+          },
+        ],
+      },
+    });
+    volume.mountIn(containerDefinition, {
       containerPath: "/root/.promptfoo",
       readOnly: false,
-      sourceVolume: "promptfoo-volume",
     });
+    fargateTaskDefinition.addVolume(volume);
 
     const service = new ecs.FargateService(this, "Service", {
       serviceName: "my-basic-service",
@@ -176,6 +151,10 @@ export class MyPublicEcs extends Construct {
         rollback: false,
       },
     });
+
+    // EBS
+    // ここ忘れないように！
+    service.addVolume(volume);
 
     this.fargateService = service;
   }
