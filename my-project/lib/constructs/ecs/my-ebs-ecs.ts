@@ -9,6 +9,8 @@ import * as efs from "aws-cdk-lib/aws-efs";
 
 type Props = {};
 
+// NOTE: fargate spotなどでタスクが終了したときはEBSも削除されるので完全な永続化はできないことに注意！
+
 export class MyPublicEcs extends Construct {
   readonly fargateService: ecs.FargateService;
   constructor(scope: Construct, id: string, props: Props) {

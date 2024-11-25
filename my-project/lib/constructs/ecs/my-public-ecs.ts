@@ -38,25 +38,6 @@ export class MyPublicEcs extends Construct {
       containerInsights: false,
     });
 
-    // TODO:
-    // Add capacity to it
-    // cluster.addCapacity("DefaultAutoScalingGroupCapacity", {
-    //   instanceType: new ec2.InstanceType("t2.xlarge"),
-    //   desiredCapacity: 3,
-    // });
-
-    // TODO:
-    // ECS Service
-    // const ec2TaskDefinition = new ecs.Ec2TaskDefinition(this, "TaskDef");
-    // ec2TaskDefinition.addContainer("DefaultContainer", {
-    //   image: ecs.ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
-    //   memoryLimitMiB: 512,
-    // });
-    // const ecsService = new ecs.Ec2Service(this, "Service", {
-    //   cluster,
-    //   taskDefinition: ec2TaskDefinition,
-    // });
-
     // AWSマネジメントコンソールから作成した場合に自動で付与される権限をつける
     // refs: https://dev.classmethod.jp/articles/ecs-exec-enableexecutecommand-error/
     const executionRole = new iam.Role(this, "PromptfooExecRole", {
