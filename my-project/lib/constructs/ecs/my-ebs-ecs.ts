@@ -104,7 +104,9 @@ export class MyPublicEcs extends Construct {
     const volume = new ecs.ServiceManagedVolume(this, "MyEBSVolume", {
       name: "myEbs1",
       managedEBSVolume: {
+        // size か snapshotId のどちらかを指定する
         size: cdk.Size.gibibytes(15),
+        // snapshotId: "snap-0a1b2c3d4e5f6g7h8",
         // 一般的なのはgp3だが、データベースなど高いIOPSを求める場合はio2やio1が良いらしい
         volumeType: ec2.EbsDeviceVolumeType.GP3,
         // XT4でも良いかも
