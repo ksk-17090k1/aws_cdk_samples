@@ -56,7 +56,7 @@ export class PromptfooApi extends Construct {
       }
     );
 
-    // NOTE: Authorizerは別に切り出してもいいかも
+    // --- Lambda Authorizerの作成 ---
     // NOTE: http apiはrest apiと違いリソースポリシーによるIP制限ができない。そのためLambda AuthorizerでIP制限を実装する。
     const handler = new aws_lambda_nodejs.NodejsFunction(
       this,
@@ -85,6 +85,7 @@ export class PromptfooApi extends Construct {
       }
     );
 
+    // HttpApiオブジェクトがデフォルトのIntegrationとAuthorizerを持つ
     const httpEndpoint = new apigwv2.HttpApi(this, "PromptfooHttpProxyApi", {
       defaultIntegration: integration,
       defaultAuthorizer: authorizer,
