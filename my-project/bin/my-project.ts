@@ -9,7 +9,20 @@ const app = new cdk.App();
 // Set Resource Name
 const resourceName = "myapp";
 
-// const publicDomain = new MyDomainStack(app, "MyDomainStack", {
+const publicDomainStack = new MyDomainStack(app, "MyDomainStack", {
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    // region: "'us-east-1'",
+    region: "ap-northeast-1",
+  },
+  // クロスリージョンでリソースを渡したい場合は以下を指定
+  // NOTE: 渡す先のスタックにも同じように指定する必要あり。
+  crossRegionReferences: true,
+});
+// 一括でタグが付けれてとても便利
+cdk.Tags.of(publicDomainStack).add("Name", `TagName-${resourceName}`);
+
+// new MyLambdaStack(app, "MyLambdaStack", {
 //   env: {
 //     account: process.env.CDK_DEFAULT_ACCOUNT,
 //     // region: "'us-east-1'",
