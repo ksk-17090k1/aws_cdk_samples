@@ -1,6 +1,7 @@
 import { Construct } from "constructs";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as cdk from "aws-cdk-lib";
 
 type Props = {};
 
@@ -11,12 +12,7 @@ export class MyCustomEc2 extends Construct {
     // 適宜必要なポリシーをつける
     const role = new iam.Role(this, "MyEc2Role", {
       assumedBy: new iam.ServicePrincipal("ec2.amazonaws.com"),
-      managedPolicies: [
-        // SSMセッションマネージャで接続するためのポリシー
-        iam.ManagedPolicy.fromAwsManagedPolicyName(
-          "AmazonSSMManagedInstanceCore"
-        ),
-      ],
+      managedPolicies: [],
       description: "my-ec2-instance-role",
     });
 
@@ -135,10 +131,31 @@ export class MyCustomEc2 extends Construct {
       associatePublicIpAddress: true,
       role: role,
       keyPair: keyPair,
-      // SSMセッションマネージャからログインする場合に必要
-      ssmSessionPermissions: true,
       // デフォルトで５分おきに取得するメトリクスを1分ごとにする。コストが増えるので注意。
       detailedMonitoring: false,
+      // --- 初期実行処理の設定 ---
+      // NOTE: userDataでも同じことができる。
+      //       下記のinitの方がIaC化はされているが設定は大変、というトレードオフになる。
+      init: ec2.CloudFormationInit.fromConfigSets({
+        configSets: {
+          // リストに入れた順番でconfigが実行される
+          default: ["yumInstall"],
+        },
+        configs: {
+          // 上で指定しているyumInstallの定義
+          yumInstall: new ec2.InitConfig([
+            // InitPackage.pythonとかも出来る
+            ec2.InitPackage.yum("git"),
+            ec2.InitPackage.yum("jq"),
+            ec2.InitPackage.yum("docker"),
+          ]),
+        },
+      }),
+      initOptions: {
+        // デフォルトで"default"なので指定しなくても動く
+        configSets: ["default"],
+        timeout: cdk.Duration.minutes(10),
+      },
     });
   }
 }

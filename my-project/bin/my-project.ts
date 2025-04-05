@@ -3,6 +3,7 @@ import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
 import { MyDomainStack } from "../lib/my-domain-stack";
 import { MyLambdaStack } from "../lib/my-lambda-stack";
+import { MyEc2Stack } from "../lib/my-ec2-stack";
 
 const app = new cdk.App();
 
@@ -33,12 +34,12 @@ cdk.Tags.of(publicDomainStack).add("Name", `TagName-${resourceName}`);
 //   crossRegionReferences: true,
 // });
 
-new MyLambdaStack(app, "MyLambdaStack", {
-  env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: "ap-northeast-1",
-  },
-});
+// new MyLambdaStack(app, "MyLambdaStack", {
+//   env: {
+//     account: process.env.CDK_DEFAULT_ACCOUNT,
+//     region: "ap-northeast-1",
+//   },
+// });
 
 // new MyVpcStack(app, "MyVpcStack", {
 //   env: {
@@ -47,12 +48,12 @@ new MyLambdaStack(app, "MyLambdaStack", {
 //   },
 // });
 
-// new MyEc2Stack(app, "MyEc2Stack", {
-//   env: {
-//     account: process.env.CDK_DEFAULT_ACCOUNT,
-//     region: "ap-northeast-1",
-//   },
-// });
+new MyEc2Stack(app, "MyEc2Stack", {
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: "ap-northeast-1",
+  },
+});
 
 // new MySbcntrStack(app, `MySbcntrStack${resourceName}`, {
 //   env: {
