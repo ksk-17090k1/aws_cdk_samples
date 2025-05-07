@@ -5,6 +5,8 @@ import * as ec2 from "aws-cdk-lib/aws-ec2";
 ALB２台構成の、セキュリティグループの構成をFE~BEまでまとめたもの
 */
 
+// NOTE: CAILのCDKで、RDSの宣言をclassでラップして、そのクラスのメソッドにallowFrom(IConnectable)というのを作るのがキレイな設計だと思った。
+
 type Props = {
   vpc: ec2.IVpc;
 };
