@@ -5,6 +5,8 @@ import * as iam from "aws-cdk-lib/aws-iam";
 // TODO: SSMセッションマネージャーを使ってprivate subnetのEC2に接続する場合は、
 //       NATもしくはVPCエンドポイントの設定が必要。なのでVPCエンドポイント版を作成したい。
 
+// TODO: IMDSv2を有効にしろとまねこんに表示されていた。
+
 type Props = {};
 
 export class MySSMPublicEc2 extends Construct {
