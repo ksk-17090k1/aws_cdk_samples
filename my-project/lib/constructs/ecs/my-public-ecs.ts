@@ -144,7 +144,6 @@ export class MyPublicEcs extends Construct {
     });
 
     // ECRからイメージを取得する場合
-    // (あと地味にタスクには複数コンテナ追加できることを覚えておく。)
     // fargateTaskDefinition.addContainer("web-from-resistory", {
     //   // AWSが用意しているサンプルイメージ (TODO: なぜかエラーがでるので調査)
     //   // NOTE: ECRのpublic repositoryはVPCエンドポイントでは接続できないらしいので注意！
